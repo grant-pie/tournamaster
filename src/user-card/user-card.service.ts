@@ -1,0 +1,129 @@
+// src/user-card/user-card.service.ts
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserCard } from './entities/user-card.entity';
+import { User } from '../user/entities/user.entity';
+import { Role } from '../user/enums/role.enum';
+import { CardService } from '../card/card.service';
+
+@Injectable()
+export class UserCardService {
+  constructor(
+    @InjectRepository(UserCard)
+    private userCardRepository: Repository<UserCard>,
+    private cardService: CardService,
+  ) {}
+
+  async findAllByUserId(userId: string): Promise<UserCard[]> {
+    return this.userCardRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      relations: ['card'],
+    });
+  }
+
+  async searchUserCards(userId: string, query: any): Promise<UserCard[]> {
+    const queryBuilder = this.userCardRepository.createQueryBuilder('userCard')
+      .leftJoinAndSelect('userCard.card', 'card')
+      .where('userCard.userId = :userId', { userId });
+    
+    // Apply filters based on card properties
+    if (query.name) {
+      queryBuilder.andWhere('card.name LIKE :name', { name: `%${query.name}%` });
+    }
+    
+    if (query.type) {
+      queryBuilder.andWhere('card.type LIKE :type', { type: `%${query.type}%` });
+    }
+    
+    if (query.colors) {
+      const colors = Array.isArray(query.colors) ? query.colors : [query.colors];
+      colors.forEach((color, index) => {
+        queryBuilder.andWhere(`card.colors LIKE :color${index}`, { [`color${index}`]: `%${color}%` });
+      });
+    }
+    
+    if (query.rarity) {
+      queryBuilder.andWhere('card.rarity = :rarity', { rarity: query.rarity });
+    }
+    
+    if (query.set) {
+      queryBuilder.andWhere('card.set = :set', { set: query.set });
+    }
+    
+    if (query.manaCost) {
+      queryBuilder.andWhere('card.manaCost LIKE :manaCost', { manaCost: `%${query.manaCost}%` });
+    }
+    
+    if (query.artist) {
+      queryBuilder.andWhere('card.artist LIKE :artist', { artist: `%${query.artist}%` });
+    }
+    
+    // Convert mana cost filter to number for comparison
+    if (query.convertedManaCost) {
+      queryBuilder.andWhere('card.convertedManaCost = :cmc', { cmc: Number(query.convertedManaCost) });
+    }
+    
+    // Filter for cards with power equal to or greater than specified
+    if (query.minPower) {
+      queryBuilder.andWhere('CAST(card.power AS DECIMAL) >= :minPower', { minPower: Number(query.minPower) });
+    }
+    
+    // Filter for cards with toughness equal to or greater than specified
+    if (query.minToughness) {
+      queryBuilder.andWhere('CAST(card.toughness AS DECIMAL) >= :minToughness', { minToughness: Number(query.minToughness) });
+    }
+    
+    // Advanced text search in card text
+    if (query.text) {
+      queryBuilder.andWhere('card.text LIKE :text', { text: `%${query.text}%` });
+    }
+
+    // Order results
+    if (query.orderBy) {
+      const direction = query.orderDirection === 'DESC' ? 'DESC' : 'ASC';
+      queryBuilder.orderBy(`card.${query.orderBy}`, direction);
+    } else {
+      queryBuilder.orderBy('userCard.createdAt', 'DESC');
+    }
+    
+    return queryBuilder.getMany();
+  }
+
+  async addCardToUser(currentUser: User, userId: string, multiverseId: string): Promise<UserCard> {
+    // Only admins can add cards to any user
+    // Regular users can only add cards to themselves (optional functionality)
+    if (currentUser.role !== Role.ADMIN && currentUser.id !== userId) {
+      throw new ForbiddenException('Only admins can add cards to other users');
+    }
+
+    // Create or find the card in our database
+    const card = await this.cardService.createOrUpdate(multiverseId);
+
+    // Create the user-card association
+    const userCard = new UserCard();
+    userCard.userId = userId;
+    userCard.cardId = card.id;
+
+    return this.userCardRepository.save(userCard);
+  }
+
+  async removeCardFromUser(currentUser: User, cardId: string): Promise<void> {
+    const card = await this.userCardRepository.findOne({
+      where: { id: cardId },
+      relations: ['user', 'card'],
+    });
+
+    if (!card) {
+      throw new NotFoundException('Card not found');
+    }
+
+    // Only admins or the card owner can remove the card
+    if (currentUser.role !== Role.ADMIN && currentUser.id !== card.userId) {
+      throw new ForbiddenException('You do not have permission to remove this card');
+    }
+
+    await this.userCardRepository.remove(card);
+  }
+}
