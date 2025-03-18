@@ -23,6 +23,15 @@ export class UserCardService {
     });
   }
 
+  async findById(id: string): Promise<UserCard | null> {
+    const userCard = await this.userCardRepository.findOne({
+      where: { id },
+      relations: ['card'],
+    });
+    
+    return userCard;
+  }
+
   async searchUserCards(userId: string, query: any): Promise<UserCard[]> {
     const queryBuilder = this.userCardRepository.createQueryBuilder('userCard')
       .leftJoinAndSelect('userCard.card', 'card')

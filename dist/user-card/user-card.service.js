@@ -33,6 +33,13 @@ let UserCardService = class UserCardService {
             relations: ['card'],
         });
     }
+    async findById(id) {
+        const userCard = await this.userCardRepository.findOne({
+            where: { id },
+            relations: ['card'],
+        });
+        return userCard;
+    }
     async searchUserCards(userId, query) {
         const queryBuilder = this.userCardRepository.createQueryBuilder('userCard')
             .leftJoinAndSelect('userCard.card', 'card')

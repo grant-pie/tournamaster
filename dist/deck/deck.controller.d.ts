@@ -1,9 +1,25 @@
 import { DeckService } from './deck.service';
 import { CreateDeckDto } from './dto/create-deck.dto';
 import { UpdateDeckDto } from './dto/update-deck.dto';
+import { UserService } from '../user/user.service';
+import { UserCardService } from '../user-card/user-card.service';
 export declare class DeckController {
     private deckService;
-    constructor(deckService: DeckService);
+    private userService;
+    private userCardService;
+    constructor(deckService: DeckService, userService: UserService, userCardService: UserCardService);
+    addUserCardToDeck(req: any, deckId: string, userCardId: string): Promise<{
+        deck: import("./entities/deck.entity").Deck;
+    }>;
+    addUserCardToDeckForUser(req: any, userId: string, deckId: string, body: {
+        userCardId: string;
+    }): Promise<{
+        error: string;
+        deck?: undefined;
+    } | {
+        deck: import("./entities/deck.entity").Deck;
+        error?: undefined;
+    }>;
     getUserDecks(req: any, userId: string): Promise<{
         error: string;
         decks?: undefined;
@@ -21,18 +37,20 @@ export declare class DeckController {
     createDeck(req: any, createDeckDto: CreateDeckDto): Promise<{
         deck: import("./entities/deck.entity").Deck;
     }>;
+    createDeckForUser(req: any, createDeckDto: CreateDeckDto, userId: string): Promise<{
+        error: string;
+        deck?: undefined;
+    } | {
+        deck: import("./entities/deck.entity").Deck;
+        error?: undefined;
+    }>;
     updateDeck(req: any, id: string, updateDeckDto: UpdateDeckDto): Promise<{
         deck: import("./entities/deck.entity").Deck;
     }>;
     removeDeck(req: any, id: string): Promise<{
         success: boolean;
     }>;
-    addCardToDeck(req: any, deckId: string, body: {
-        multiverseId: string;
-    }): Promise<{
-        deck: import("./entities/deck.entity").Deck;
-    }>;
-    removeCardFromDeck(req: any, deckId: string, cardId: string): Promise<{
+    removeUserCardFromDeck(req: any, deckId: string, userCardId: string): Promise<{
         deck: import("./entities/deck.entity").Deck;
     }>;
 }

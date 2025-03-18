@@ -17,29 +17,26 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const deck_entity_1 = require("./entities/deck.entity");
-const card_entity_1 = require("../card/entities/card.entity");
-const card_service_1 = require("../card/card.service");
+const user_card_entity_1 = require("../user-card/entities/user-card.entity");
 const role_enum_1 = require("../user/enums/role.enum");
 let DeckService = class DeckService {
     deckRepository;
-    cardRepository;
-    cardService;
-    constructor(deckRepository, cardRepository, cardService) {
+    userCardRepository;
+    constructor(deckRepository, userCardRepository) {
         this.deckRepository = deckRepository;
-        this.cardRepository = cardRepository;
-        this.cardService = cardService;
+        this.userCardRepository = userCardRepository;
     }
     async findAllByUserId(userId) {
         return this.deckRepository.find({
             where: { userId },
-            relations: ['cards'],
+            relations: ['userCards', 'userCards.card'],
             order: { createdAt: 'DESC' },
         });
     }
     async findOne(id) {
         const deck = await this.deckRepository.findOne({
             where: { id },
-            relations: ['cards'],
+            relations: ['userCards', 'userCards.card'],
         });
         if (!deck) {
             throw new common_1.NotFoundException(`Deck with ID ${id} not found`);
@@ -51,6 +48,7 @@ let DeckService = class DeckService {
         deck.name = createDeckDto.name;
         deck.description = createDeckDto.description || '';
         deck.userId = user.id;
+        deck.userCards = [];
         return this.deckRepository.save(deck);
     }
     async update(currentUser, deckId, updateDeckDto) {
@@ -73,25 +71,42 @@ let DeckService = class DeckService {
         }
         await this.deckRepository.remove(deck);
     }
-    async addCardToDeck(currentUser, deckId, multiverseId) {
+    async addUserCardToDeck(currentUser, deckId, userCardId) {
         const deck = await this.findOne(deckId);
         if (currentUser.role !== role_enum_1.Role.ADMIN && currentUser.id !== deck.userId) {
+            console.log('You do not have permission to modify this deck');
             throw new common_1.ForbiddenException('You do not have permission to modify this deck');
         }
-        const card = await this.cardService.createOrUpdate(multiverseId);
-        const isCardInDeck = deck.cards.some(c => c.id === card.id);
-        if (!isCardInDeck) {
-            deck.cards.push(card);
+        const userCard = await this.userCardRepository.findOne({
+            where: { id: userCardId }
+        });
+        if (!userCard) {
+            console.log('usercard not found');
+            throw new common_1.NotFoundException(`UserCard with ID ${userCardId} not found`);
+        }
+        if (userCard.userId !== currentUser.id && currentUser.role !== role_enum_1.Role.ADMIN) {
+            console.log('card does not belong to current user');
+            throw new common_1.ForbiddenException('You do not have permission to add this card');
+        }
+        const isUserCardInDeck = deck.userCards.some(uc => uc.id === userCardId);
+        console.log(isUserCardInDeck);
+        if (!isUserCardInDeck) {
+            if (!deck.userCards) {
+                deck.userCards = [];
+            }
+            console.log('adding card to deck');
+            deck.userCards.push(userCard);
             await this.deckRepository.save(deck);
         }
+        console.log(deck);
         return deck;
     }
-    async removeCardFromDeck(currentUser, deckId, cardId) {
+    async removeUserCardFromDeck(currentUser, deckId, userCardId) {
         const deck = await this.findOne(deckId);
         if (currentUser.role !== role_enum_1.Role.ADMIN && currentUser.id !== deck.userId) {
             throw new common_1.ForbiddenException('You do not have permission to modify this deck');
         }
-        deck.cards = deck.cards.filter(card => card.id !== cardId);
+        deck.userCards = deck.userCards.filter(userCard => userCard.id !== userCardId);
         return this.deckRepository.save(deck);
     }
 };
@@ -99,9 +114,8 @@ exports.DeckService = DeckService;
 exports.DeckService = DeckService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(deck_entity_1.Deck)),
-    __param(1, (0, typeorm_1.InjectRepository)(card_entity_1.Card)),
+    __param(1, (0, typeorm_1.InjectRepository)(user_card_entity_1.UserCard)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
-        typeorm_2.Repository,
-        card_service_1.CardService])
+        typeorm_2.Repository])
 ], DeckService);
 //# sourceMappingURL=deck.service.js.map

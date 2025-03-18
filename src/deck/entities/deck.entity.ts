@@ -1,7 +1,7 @@
 // src/deck/entities/deck.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
-import { Card } from '../../card/entities/card.entity';
+import { UserCard } from '../../user-card/entities/user-card.entity';
 
 @Entity('decks')
 export class Deck {
@@ -21,13 +21,13 @@ export class Deck {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToMany(() => Card)
+  @ManyToMany(() => UserCard)
   @JoinTable({
-    name: 'deck_cards',
+    name: 'deck_user_cards',
     joinColumn: { name: 'deckId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'cardId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'userCardId', referencedColumnName: 'id' },
   })
-  cards: Card[];
+  userCards: UserCard[];
 
   @CreateDateColumn()
   createdAt: Date;

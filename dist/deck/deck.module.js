@@ -14,14 +14,19 @@ const deck_service_1 = require("./deck.service");
 const deck_entity_1 = require("./entities/deck.entity");
 const card_module_1 = require("../card/card.module");
 const card_entity_1 = require("../card/entities/card.entity");
+const user_module_1 = require("../user/user.module");
+const user_card_module_1 = require("../user-card/user-card.module");
+const user_card_entity_1 = require("../user-card/entities/user-card.entity");
 let DeckModule = class DeckModule {
 };
 exports.DeckModule = DeckModule;
 exports.DeckModule = DeckModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([deck_entity_1.Deck, card_entity_1.Card]),
+            typeorm_1.TypeOrmModule.forFeature([deck_entity_1.Deck, card_entity_1.Card, user_card_entity_1.UserCard]),
             card_module_1.CardModule,
+            user_module_1.UserModule,
+            user_card_module_1.UserCardModule,
         ],
         controllers: [deck_controller_1.DeckController],
         providers: [deck_service_1.DeckService],

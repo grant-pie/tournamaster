@@ -12,14 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Deck = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("../../user/entities/user.entity");
-const card_entity_1 = require("../../card/entities/card.entity");
+const user_card_entity_1 = require("../../user-card/entities/user-card.entity");
 let Deck = class Deck {
     id;
     name;
     description;
     userId;
     user;
-    cards;
+    userCards;
     createdAt;
     updatedAt;
 };
@@ -46,14 +46,14 @@ __decorate([
     __metadata("design:type", user_entity_1.User)
 ], Deck.prototype, "user", void 0);
 __decorate([
-    (0, typeorm_1.ManyToMany)(() => card_entity_1.Card),
+    (0, typeorm_1.ManyToMany)(() => user_card_entity_1.UserCard),
     (0, typeorm_1.JoinTable)({
-        name: 'deck_cards',
+        name: 'deck_user_cards',
         joinColumn: { name: 'deckId', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'cardId', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'userCardId', referencedColumnName: 'id' },
     }),
     __metadata("design:type", Array)
-], Deck.prototype, "cards", void 0);
+], Deck.prototype, "userCards", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

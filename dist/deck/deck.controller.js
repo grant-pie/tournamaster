@@ -19,10 +19,49 @@ const deck_service_1 = require("./deck.service");
 const create_deck_dto_1 = require("./dto/create-deck.dto");
 const update_deck_dto_1 = require("./dto/update-deck.dto");
 const role_enum_1 = require("../user/enums/role.enum");
+const user_service_1 = require("../user/user.service");
+const user_card_service_1 = require("../user-card/user-card.service");
 let DeckController = class DeckController {
     deckService;
-    constructor(deckService) {
+    userService;
+    userCardService;
+    constructor(deckService, userService, userCardService) {
         this.deckService = deckService;
+        this.userService = userService;
+        this.userCardService = userCardService;
+    }
+    async addUserCardToDeck(req, deckId, userCardId) {
+        console.log('route called');
+        const userCard = await this.userCardService.findById(userCardId);
+        if (!userCard) {
+            console.log('user not found');
+            throw new common_1.NotFoundException(`UserCard with id ${userCardId} not found`);
+        }
+        const deck = await this.deckService.addUserCardToDeck(req.user, deckId, userCardId);
+        return { deck };
+    }
+    async addUserCardToDeckForUser(req, userId, deckId, body) {
+        console.log('route called');
+        if (req.user.role !== role_enum_1.Role.ADMIN) {
+            return { error: 'Access denied' };
+        }
+        console.log('route called');
+        const user = await this.userService.findById(userId);
+        if (!user) {
+            console.log('user not found');
+            throw new common_1.NotFoundException(`User with user id ${userId} not found`);
+        }
+        const userCard = await this.userCardService.findById(body.userCardId);
+        if (!userCard) {
+            console.log('card not found');
+            throw new common_1.NotFoundException(`UserCard with id ${body.userCardId} not found`);
+        }
+        if (userCard.userId !== userId) {
+            console.log('card does not belong to user');
+            return { error: 'UserCard does not belong to this user' };
+        }
+        const deck = await this.deckService.addUserCardToDeck(user, deckId, body.userCardId);
+        return { deck };
     }
     async getUserDecks(req, userId) {
         if (req.user.role !== role_enum_1.Role.ADMIN && req.user.id !== userId) {
@@ -42,6 +81,18 @@ let DeckController = class DeckController {
         const deck = await this.deckService.create(req.user, createDeckDto);
         return { deck };
     }
+    async createDeckForUser(req, createDeckDto, userId) {
+        if (req.user.role !== role_enum_1.Role.ADMIN) {
+            return { error: 'Access denied' };
+        }
+        const user = await this.userService.findById(userId);
+        if (!user) {
+            throw new common_1.NotFoundException(`User with user id ${userId} not found`);
+        }
+        const deck = await this.deckService.create(user, createDeckDto);
+        console.log({ deck });
+        return { deck };
+    }
     async updateDeck(req, id, updateDeckDto) {
         const deck = await this.deckService.update(req.user, id, updateDeckDto);
         return { deck };
@@ -50,16 +101,31 @@ let DeckController = class DeckController {
         await this.deckService.delete(req.user, id);
         return { success: true };
     }
-    async addCardToDeck(req, deckId, body) {
-        const deck = await this.deckService.addCardToDeck(req.user, deckId, body.multiverseId);
-        return { deck };
-    }
-    async removeCardFromDeck(req, deckId, cardId) {
-        const deck = await this.deckService.removeCardFromDeck(req.user, deckId, cardId);
+    async removeUserCardFromDeck(req, deckId, userCardId) {
+        const deck = await this.deckService.removeUserCardFromDeck(req.user, deckId, userCardId);
         return { deck };
     }
 };
 exports.DeckController = DeckController;
+__decorate([
+    (0, common_1.Post)(':deckId/user-cards/:userCardId'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('deckId')),
+    __param(2, (0, common_1.Param)('userCardId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
+], DeckController.prototype, "addUserCardToDeck", null);
+__decorate([
+    (0, common_1.Post)('/user/:userId/:deckId/user-cards'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('userId')),
+    __param(2, (0, common_1.Param)('deckId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], DeckController.prototype, "addUserCardToDeckForUser", null);
 __decorate([
     (0, common_1.Get)('user/:userId'),
     __param(0, (0, common_1.Req)()),
@@ -85,6 +151,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DeckController.prototype, "createDeck", null);
 __decorate([
+    (0, common_1.Post)('user/:userId'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, create_deck_dto_1.CreateDeckDto, String]),
+    __metadata("design:returntype", Promise)
+], DeckController.prototype, "createDeckForUser", null);
+__decorate([
     (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('id')),
@@ -102,26 +177,19 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DeckController.prototype, "removeDeck", null);
 __decorate([
-    (0, common_1.Post)(':deckId/cards'),
+    (0, common_1.Delete)(':deckId/user-cards/:userCardId'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('deckId')),
-    __param(2, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, Object]),
-    __metadata("design:returntype", Promise)
-], DeckController.prototype, "addCardToDeck", null);
-__decorate([
-    (0, common_1.Delete)(':deckId/cards/:cardId'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('deckId')),
-    __param(2, (0, common_1.Param)('cardId')),
+    __param(2, (0, common_1.Param)('userCardId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
-], DeckController.prototype, "removeCardFromDeck", null);
+], DeckController.prototype, "removeUserCardFromDeck", null);
 exports.DeckController = DeckController = __decorate([
     (0, common_1.Controller)('decks'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
-    __metadata("design:paramtypes", [deck_service_1.DeckService])
+    __metadata("design:paramtypes", [deck_service_1.DeckService,
+        user_service_1.UserService,
+        user_card_service_1.UserCardService])
 ], DeckController);
 //# sourceMappingURL=deck.controller.js.map

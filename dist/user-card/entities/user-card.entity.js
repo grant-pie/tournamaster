@@ -13,12 +13,14 @@ exports.UserCard = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("../../user/entities/user.entity");
 const card_entity_1 = require("../../card/entities/card.entity");
+const deck_entity_1 = require("../../deck/entities/deck.entity");
 let UserCard = class UserCard {
     id;
     userId;
     cardId;
     user;
     card;
+    decks;
     createdAt;
 };
 exports.UserCard = UserCard;
@@ -44,6 +46,10 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'cardId' }),
     __metadata("design:type", card_entity_1.Card)
 ], UserCard.prototype, "card", void 0);
+__decorate([
+    (0, typeorm_1.ManyToMany)(() => deck_entity_1.Deck, deck => deck.userCards),
+    __metadata("design:type", Array)
+], UserCard.prototype, "decks", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

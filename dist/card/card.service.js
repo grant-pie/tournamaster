@@ -63,6 +63,7 @@ let CardService = class CardService {
             return this.cardRepository.save(card);
         }
         catch (error) {
+            console.log(`Card with multiverse ID ${multiverseId} could not be found or fetched from Scryfall API`);
             throw new common_1.NotFoundException(`Card with multiverse ID ${multiverseId} could not be found or fetched from Scryfall API`);
         }
     }

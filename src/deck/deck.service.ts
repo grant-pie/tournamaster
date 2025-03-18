@@ -4,8 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Deck } from './entities/deck.entity';
 import { User } from '../user/entities/user.entity';
-import { Card } from '../card/entities/card.entity';
-import { CardService } from '../card/card.service';
+import { UserCard } from '../user-card/entities/user-card.entity';
 import { Role } from '../user/enums/role.enum';
 
 @Injectable()
@@ -13,15 +12,14 @@ export class DeckService {
   constructor(
     @InjectRepository(Deck)
     private deckRepository: Repository<Deck>,
-    @InjectRepository(Card)
-    private cardRepository: Repository<Card>,
-    private cardService: CardService,
+    @InjectRepository(UserCard)
+    private userCardRepository: Repository<UserCard>,
   ) {}
 
   async findAllByUserId(userId: string): Promise<Deck[]> {
     return this.deckRepository.find({
       where: { userId },
-      relations: ['cards'],
+      relations: ['userCards', 'userCards.card'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -29,7 +27,7 @@ export class DeckService {
   async findOne(id: string): Promise<Deck> {
     const deck = await this.deckRepository.findOne({
       where: { id },
-      relations: ['cards'],
+      relations: ['userCards', 'userCards.card'],
     });
     
     if (!deck) {
@@ -44,6 +42,7 @@ export class DeckService {
     deck.name = createDeckDto.name;
     deck.description = createDeckDto.description || '';
     deck.userId = user.id;
+    deck.userCards = [];
     
     return this.deckRepository.save(deck);
   }
@@ -82,35 +81,54 @@ export class DeckService {
     await this.deckRepository.remove(deck);
   }
 
-  async addCardToDeck(
+  async addUserCardToDeck(
     currentUser: User,
     deckId: string,
-    multiverseId: string,
+    userCardId: string,
   ): Promise<Deck> {
     const deck = await this.findOne(deckId);
     
     // Check if user owns deck or is admin
     if (currentUser.role !== Role.ADMIN && currentUser.id !== deck.userId) {
+      console.log('You do not have permission to modify this deck');
       throw new ForbiddenException('You do not have permission to modify this deck');
     }
     
-    // Get or create card
-    const card = await this.cardService.createOrUpdate(multiverseId);
+    // Get the user card
+    const userCard = await this.userCardRepository.findOne({
+      where: { id: userCardId }
+    });
     
-    // Check if card is already in deck
-    const isCardInDeck = deck.cards.some(c => c.id === card.id);
-    if (!isCardInDeck) {
-      deck.cards.push(card);
-      await this.deckRepository.save(deck);
+    if (!userCard) {
+      console.log('usercard not found');
+      throw new NotFoundException(`UserCard with ID ${userCardId} not found`);
     }
     
+    // Check if the user card belongs to the current user
+    if (userCard.userId !== currentUser.id && currentUser.role !== Role.ADMIN) {
+      console.log('card does not belong to current user');
+      throw new ForbiddenException('You do not have permission to add this card');
+    }
+    
+    // Check if the user card is already in the deck
+    const isUserCardInDeck = deck.userCards.some(uc => uc.id === userCardId);
+    console.log(isUserCardInDeck);
+    if (!isUserCardInDeck) {
+      if (!deck.userCards) {
+        deck.userCards = [];
+      }
+      console.log('adding card to deck');
+      deck.userCards.push(userCard);
+      await this.deckRepository.save(deck);
+    }
+    console.log(deck);
     return deck;
   }
 
-  async removeCardFromDeck(
+  async removeUserCardFromDeck(
     currentUser: User,
     deckId: string,
-    cardId: string,
+    userCardId: string,
   ): Promise<Deck> {
     const deck = await this.findOne(deckId);
     
@@ -119,8 +137,8 @@ export class DeckService {
       throw new ForbiddenException('You do not have permission to modify this deck');
     }
     
-    // Filter out the card to remove
-    deck.cards = deck.cards.filter(card => card.id !== cardId);
+    // Filter out the user card to remove
+    deck.userCards = deck.userCards.filter(userCard => userCard.id !== userCardId);
     
     return this.deckRepository.save(deck);
   }
