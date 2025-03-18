@@ -28,6 +28,34 @@ export class UserCardService {
       .leftJoinAndSelect('userCard.card', 'card')
       .where('userCard.userId = :userId', { userId });
     
+    // Apply date filter for createdAt in yyyy-mm-dd format
+    if (query.createdAt) {
+      const dateStr = query.createdAt;
+      // Validate date format
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        // Create start and end of the specified day
+        const startDate = new Date(`${dateStr}T00:00:00.000Z`);
+        const endDate = new Date(`${dateStr}T23:59:59.999Z`);
+        
+        queryBuilder.andWhere('userCard.createdAt >= :startDate', { startDate })
+                   .andWhere('userCard.createdAt <= :endDate', { endDate });
+      }
+    }
+    
+    // Apply date range filter if start and end dates are provided
+    if (query.createdAtStart && query.createdAtEnd) {
+      const startDateStr = query.createdAtStart;
+      const endDateStr = query.createdAtEnd;
+      
+      if (/^\d{4}-\d{2}-\d{2}$/.test(startDateStr) && /^\d{4}-\d{2}-\d{2}$/.test(endDateStr)) {
+        const startDate = new Date(`${startDateStr}T00:00:00.000Z`);
+        const endDate = new Date(`${endDateStr}T23:59:59.999Z`);
+        
+        queryBuilder.andWhere('userCard.createdAt >= :startDate', { startDate })
+                   .andWhere('userCard.createdAt <= :endDate', { endDate });
+      }
+    }
+    
     // Apply filters based on card properties
     if (query.name) {
       queryBuilder.andWhere('card.name LIKE :name', { name: `%${query.name}%` });
