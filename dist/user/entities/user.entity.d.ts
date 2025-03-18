@@ -8,6 +8,7 @@ export declare class User {
     lastName: string;
     picture: string;
     googleId: string;
+    username: string;
     role: Role;
     cards: UserCard[];
     decks: Deck[];

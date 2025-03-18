@@ -21,6 +21,7 @@ let User = class User {
     lastName;
     picture;
     googleId;
+    username;
     role;
     cards;
     decks;
@@ -52,6 +53,10 @@ __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
 ], User.prototype, "googleId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ unique: true, nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "username", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         type: 'enum',

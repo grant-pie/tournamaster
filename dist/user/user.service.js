@@ -45,6 +45,23 @@ let UserService = class UserService {
     async findAll() {
         return this.userRepository.find();
     }
+    async updateUsername(userId, updateUsernameDto) {
+        const existingUserWithUsername = await this.userRepository.findOne({
+            where: { username: updateUsernameDto.username }
+        });
+        if (existingUserWithUsername && existingUserWithUsername.id !== userId) {
+            throw new common_1.ConflictException('Username is already taken');
+        }
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new common_1.NotFoundException(`User with ID ${userId} not found`);
+        }
+        user.username = updateUsernameDto.username;
+        return this.userRepository.save(user);
+    }
+    async findByUsername(username) {
+        return this.userRepository.findOne({ where: { username } });
+    }
 };
 exports.UserService = UserService;
 exports.UserService = UserService = __decorate([

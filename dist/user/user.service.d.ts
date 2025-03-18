@@ -1,5 +1,6 @@
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UpdateUsernameDto } from './dto/update-username.dto';
 export declare class UserService {
     private userRepository;
     constructor(userRepository: Repository<User>);
@@ -12,4 +13,6 @@ export declare class UserService {
     }): Promise<User>;
     findById(id: string): Promise<User | null>;
     findAll(): Promise<User[]>;
+    updateUsername(userId: string, updateUsernameDto: UpdateUsernameDto): Promise<User>;
+    findByUsername(username: string): Promise<User | null>;
 }

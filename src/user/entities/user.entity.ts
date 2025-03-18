@@ -24,6 +24,9 @@ export class User {
   @Column({ unique: true })
   googleId: string;
 
+  @Column({ unique: true, nullable: true })
+  username: string;
+
   @Column({
     type: 'enum',
     enum: Role,
