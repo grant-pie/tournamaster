@@ -19,10 +19,33 @@ const user_card_service_1 = require("./user-card.service");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const role_enum_1 = require("../user/enums/role.enum");
+const user_service_1 = require("../user/user.service");
 let UserCardController = class UserCardController {
     userCardService;
-    constructor(userCardService) {
+    userService;
+    constructor(userCardService, userService) {
         this.userCardService = userCardService;
+        this.userService = userService;
+    }
+    async getCardsByUsername(username, query) {
+        const user = await this.userService.findByUsername(username);
+        if (!user) {
+            throw new common_1.NotFoundException(`User with username ${username} not found`);
+        }
+        let userCards;
+        if (Object.keys(query).length > 0) {
+            userCards = await this.userCardService.searchUserCards(user.id, query);
+        }
+        else {
+            userCards = await this.userCardService.findAllByUserId(user.id);
+        }
+        const cards = userCards.map(userCard => ({
+            id: userCard.id,
+            userId: userCard.userId,
+            cardDetails: userCard.card,
+            createdAt: userCard.createdAt
+        }));
+        return { cards };
     }
     async getUserCards(req, userId, query) {
         if (req.user.role !== role_enum_1.Role.ADMIN && req.user.id !== userId) {
@@ -61,7 +84,16 @@ let UserCardController = class UserCardController {
 };
 exports.UserCardController = UserCardController;
 __decorate([
+    (0, common_1.Get)('username/:username'),
+    __param(0, (0, common_1.Param)('username')),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserCardController.prototype, "getCardsByUsername", null);
+__decorate([
     (0, common_1.Get)(':userId'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('userId')),
     __param(2, (0, common_1.Query)()),
@@ -71,7 +103,7 @@ __decorate([
 ], UserCardController.prototype, "getUserCards", null);
 __decorate([
     (0, common_1.Post)(':userId'),
-    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.ADMIN),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('userId')),
@@ -82,6 +114,7 @@ __decorate([
 ], UserCardController.prototype, "addCardToUser", null);
 __decorate([
     (0, common_1.Delete)(':cardId'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('cardId')),
     __metadata("design:type", Function),
@@ -90,7 +123,7 @@ __decorate([
 ], UserCardController.prototype, "removeCard", null);
 exports.UserCardController = UserCardController = __decorate([
     (0, common_1.Controller)('user-cards'),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
-    __metadata("design:paramtypes", [user_card_service_1.UserCardService])
+    __metadata("design:paramtypes", [user_card_service_1.UserCardService,
+        user_service_1.UserService])
 ], UserCardController);
 //# sourceMappingURL=user-card.controller.js.map

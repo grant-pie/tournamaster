@@ -1,17 +1,49 @@
 // src/user-card/user-card.controller.ts
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, UseGuards, Req, Query, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserCardService } from './user-card.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../user/enums/role.enum';
+import { UserService } from '../user/user.service';
 
 @Controller('user-cards')
-@UseGuards(AuthGuard('jwt'))
 export class UserCardController {
-  constructor(private userCardService: UserCardService) {}
+  constructor(
+    private userCardService: UserCardService,
+    private userService: UserService,
+  ) {}
+
+  @Get('username/:username')
+  async getCardsByUsername(@Param('username') username: string, @Query() query) {
+    // Find the user by username
+    const user = await this.userService.findByUsername(username);
+    
+    if (!user) {
+      throw new NotFoundException(`User with username ${username} not found`);
+    }
+    
+    // Get user's cards
+    let userCards;
+    if (Object.keys(query).length > 0) {
+      userCards = await this.userCardService.searchUserCards(user.id, query);
+    } else {
+      userCards = await this.userCardService.findAllByUserId(user.id);
+    }
+    
+    // Format the response to include card details
+    const cards = userCards.map(userCard => ({
+      id: userCard.id,
+      userId: userCard.userId,
+      cardDetails: userCard.card,
+      createdAt: userCard.createdAt
+    }));
+    
+    return { cards };
+  }
 
   @Get(':userId')
+  @UseGuards(AuthGuard('jwt'))
   async getUserCards(@Req() req, @Param('userId') userId: string, @Query() query) {
     // If not admin and not requesting own cards, throw error
     if (req.user.role !== Role.ADMIN && req.user.id !== userId) {
@@ -38,7 +70,7 @@ export class UserCardController {
   }
 
   @Post(':userId')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.ADMIN)
   async addCardToUser(
     @Req() req,
@@ -62,6 +94,7 @@ export class UserCardController {
   }
 
   @Delete(':cardId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   async removeCard(@Req() req, @Param('cardId') cardId: string) {
     await this.userCardService.removeCardFromUser(req.user, cardId);
     return { success: true };

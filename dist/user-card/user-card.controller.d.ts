@@ -1,7 +1,12 @@
 import { UserCardService } from './user-card.service';
+import { UserService } from '../user/user.service';
 export declare class UserCardController {
     private userCardService;
-    constructor(userCardService: UserCardService);
+    private userService;
+    constructor(userCardService: UserCardService, userService: UserService);
+    getCardsByUsername(username: string, query: any): Promise<{
+        cards: any;
+    }>;
     getUserCards(req: any, userId: string, query: any): Promise<{
         error: string;
         cards?: undefined;

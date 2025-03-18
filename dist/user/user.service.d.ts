@@ -15,4 +15,8 @@ export declare class UserService {
     findAll(): Promise<User[]>;
     updateUsername(userId: string, updateUsernameDto: UpdateUsernameDto): Promise<User>;
     findByUsername(username: string): Promise<User | null>;
+    getAllUsernames(): Promise<{
+        id: string;
+        username: string;
+    }[]>;
 }

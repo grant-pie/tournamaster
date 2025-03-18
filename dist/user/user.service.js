@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const user_entity_1 = require("./entities/user.entity");
 const role_enum_1 = require("./enums/role.enum");
+const typeorm_3 = require("typeorm");
 let UserService = class UserService {
     userRepository;
     constructor(userRepository) {
@@ -60,7 +61,20 @@ let UserService = class UserService {
         return this.userRepository.save(user);
     }
     async findByUsername(username) {
-        return this.userRepository.findOne({ where: { username } });
+        if (!username) {
+            return null;
+        }
+        return this.userRepository.findOne({
+            where: { username },
+            select: ['id', 'username', 'firstName', 'lastName', 'picture', 'role', 'createdAt']
+        });
+    }
+    async getAllUsernames() {
+        const users = await this.userRepository.find({
+            where: { username: (0, typeorm_3.Not)((0, typeorm_3.IsNull)()) },
+            select: ['id', 'username']
+        });
+        return users;
     }
 };
 exports.UserService = UserService;

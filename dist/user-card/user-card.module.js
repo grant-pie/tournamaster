@@ -13,6 +13,7 @@ const user_card_controller_1 = require("./user-card.controller");
 const user_card_service_1 = require("./user-card.service");
 const user_card_entity_1 = require("./entities/user-card.entity");
 const card_module_1 = require("../card/card.module");
+const user_module_1 = require("../user/user.module");
 let UserCardModule = class UserCardModule {
 };
 exports.UserCardModule = UserCardModule;
@@ -21,6 +22,7 @@ exports.UserCardModule = UserCardModule = __decorate([
         imports: [
             typeorm_1.TypeOrmModule.forFeature([user_card_entity_1.UserCard]),
             card_module_1.CardModule,
+            user_module_1.UserModule,
         ],
         controllers: [user_card_controller_1.UserCardController],
         providers: [user_card_service_1.UserCardService],

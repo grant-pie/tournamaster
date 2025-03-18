@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { Role } from './enums/role.enum';
 import { UpdateUsernameDto } from './dto/update-username.dto';
-
+import { Not, IsNull } from 'typeorm';
 @Injectable()
 export class UserService {
   constructor(
@@ -69,6 +69,22 @@ export class UserService {
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { username } });
+    if (!username) {
+      return null;
+    }
+    
+    return this.userRepository.findOne({ 
+      where: { username },
+      select: ['id', 'username', 'firstName', 'lastName', 'picture', 'role', 'createdAt']
+    });
+  }
+
+  async getAllUsernames(): Promise<{ id: string; username: string }[]> {
+    const users = await this.userRepository.find({
+      where: { username: Not(IsNull()) },
+      select: ['id', 'username']
+    });
+    
+    return users;
   }
 }
