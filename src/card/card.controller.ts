@@ -27,12 +27,12 @@ export class CardController {
     return this.cardService.findOne(id);
   }
 
-  @Get('multiverse/:multiverseId')
-  async findByMultiverseId(@Param('multiverseId') multiverseId: string): Promise<Card> {
-    const card = await this.cardService.findByMultiverseId(multiverseId);
+  @Get('scryfall/:scryfallId')
+  async findByscryfallId(@Param('scryfallId') scryfallId: string): Promise<Card> {
+    const card = await this.cardService.findByScryfallId(scryfallId);
     if (!card) {
       // If card doesn't exist in our database, fetch it
-      return this.cardService.createOrUpdate(multiverseId);
+      return this.cardService.createOrUpdate(scryfallId);
     }
     return card;
   }

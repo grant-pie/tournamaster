@@ -30,10 +30,10 @@ let CardController = class CardController {
     async findOne(id) {
         return this.cardService.findOne(id);
     }
-    async findByMultiverseId(multiverseId) {
-        const card = await this.cardService.findByMultiverseId(multiverseId);
+    async findByscryfallId(scryfallId) {
+        const card = await this.cardService.findByScryfallId(scryfallId);
         if (!card) {
-            return this.cardService.createOrUpdate(multiverseId);
+            return this.cardService.createOrUpdate(scryfallId);
         }
         return card;
     }
@@ -54,12 +54,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CardController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Get)('multiverse/:multiverseId'),
-    __param(0, (0, common_1.Param)('multiverseId')),
+    (0, common_1.Get)('scryfall/:scryfallId'),
+    __param(0, (0, common_1.Param)('scryfallId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], CardController.prototype, "findByMultiverseId", null);
+], CardController.prototype, "findByscryfallId", null);
 exports.CardController = CardController = __decorate([
     (0, common_1.Controller)('cards'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),

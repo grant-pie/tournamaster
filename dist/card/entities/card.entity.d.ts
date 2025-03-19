@@ -1,7 +1,7 @@
 import { UserCard } from '../../user-card/entities/user-card.entity';
 export declare class Card {
     id: string;
-    multiverseId: string;
+    scryfallId: string;
     name: string;
     manaCost: string;
     convertedManaCost: number;

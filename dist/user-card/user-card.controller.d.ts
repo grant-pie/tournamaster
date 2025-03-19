@@ -15,7 +15,7 @@ export declare class UserCardController {
         error?: undefined;
     }>;
     addCardToUser(req: any, userId: string, body: {
-        multiverseId: string;
+        scryfallId: string;
     }): Promise<{
         userCard: {
             id: string;

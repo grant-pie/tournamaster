@@ -14,7 +14,7 @@ const typeorm_1 = require("typeorm");
 const user_card_entity_1 = require("../../user-card/entities/user-card.entity");
 let Card = class Card {
     id;
-    multiverseId;
+    scryfallId;
     name;
     manaCost;
     convertedManaCost;
@@ -40,7 +40,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
-], Card.prototype, "multiverseId", void 0);
+], Card.prototype, "scryfallId", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)

@@ -108,11 +108,11 @@ let UserCardService = class UserCardService {
         }
         return queryBuilder.getMany();
     }
-    async addCardToUser(currentUser, userId, multiverseId) {
+    async addCardToUser(currentUser, userId, scryfallId) {
         if (currentUser.role !== role_enum_1.Role.ADMIN && currentUser.id !== userId) {
             throw new common_1.ForbiddenException('Only admins can add cards to other users');
         }
-        const card = await this.cardService.createOrUpdate(multiverseId);
+        const card = await this.cardService.createOrUpdate(scryfallId);
         const userCard = new user_card_entity_1.UserCard();
         userCard.userId = userId;
         userCard.cardId = card.id;

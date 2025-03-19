@@ -5,7 +5,7 @@ export declare class CardService {
     constructor(cardRepository: Repository<Card>);
     findAll(): Promise<Card[]>;
     findOne(id: string): Promise<Card>;
-    findByMultiverseId(multiverseId: string): Promise<Card | null>;
-    createOrUpdate(multiverseId: string): Promise<Card>;
+    findByScryfallId(scryfallId: string): Promise<Card | null>;
+    createOrUpdate(scryfallId: string): Promise<Card>;
     search(query: any): Promise<Card[]>;
 }

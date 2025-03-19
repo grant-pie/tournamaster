@@ -128,7 +128,7 @@ export class UserCardService {
     return queryBuilder.getMany();
   }
 
-  async addCardToUser(currentUser: User, userId: string, multiverseId: string): Promise<UserCard> {
+  async addCardToUser(currentUser: User, userId: string, scryfallId: string): Promise<UserCard> {
     // Only admins can add cards to any user
     // Regular users can only add cards to themselves (optional functionality)
     if (currentUser.role !== Role.ADMIN && currentUser.id !== userId) {
@@ -136,7 +136,7 @@ export class UserCardService {
     }
 
     // Create or find the card in our database
-    const card = await this.cardService.createOrUpdate(multiverseId);
+    const card = await this.cardService.createOrUpdate(scryfallId);
 
     // Create the user-card association
     const userCard = new UserCard();

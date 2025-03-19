@@ -5,5 +5,5 @@ export declare class CardController {
     constructor(cardService: CardService);
     findAll(query: any): Promise<Card[]>;
     findOne(id: string): Promise<Card>;
-    findByMultiverseId(multiverseId: string): Promise<Card>;
+    findByscryfallId(scryfallId: string): Promise<Card>;
 }

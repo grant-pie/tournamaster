@@ -9,6 +9,6 @@ export declare class UserCardService {
     findAllByUserId(userId: string): Promise<UserCard[]>;
     findById(id: string): Promise<UserCard | null>;
     searchUserCards(userId: string, query: any): Promise<UserCard[]>;
-    addCardToUser(currentUser: User, userId: string, multiverseId: string): Promise<UserCard>;
+    addCardToUser(currentUser: User, userId: string, scryfallId: string): Promise<UserCard>;
     removeCardFromUser(currentUser: User, cardId: string): Promise<void>;
 }

@@ -8,7 +8,7 @@ export class Card {
   id: string;
 
   @Column({ unique: true })
-  multiverseId: string;
+  scryfallId: string;
 
   @Column()
   name: string;

@@ -24,14 +24,14 @@ export class CardService {
     return card;
   }
 
-  async findByMultiverseId(multiverseId: string): Promise<Card | null> {
-    const card = await this.cardRepository.findOne({ where: { multiverseId } });
+  async findByScryfallId(scryfallId: string): Promise<Card | null> {
+    const card = await this.cardRepository.findOne({ where: { scryfallId } });
     return card;
   }
 
-  async createOrUpdate(multiverseId: string): Promise<Card> {
+  async createOrUpdate(scryfallId: string): Promise<Card> {
     // Check if card already exists in our database
-    let card = await this.findByMultiverseId(multiverseId);
+    let card = await this.findByScryfallId(scryfallId);
     
     // If card exists, return it
     if (card) {
@@ -40,12 +40,12 @@ export class CardService {
     
     // If card doesn't exist, fetch data from Scryfall API
     try {
-      const response = await axios.get(`https://api.scryfall.com/cards/multiverse/${multiverseId}`);
+      const response = await axios.get(`https://api.scryfall.com/cards/${scryfallId}`);
       const cardData = response.data;
       
       // Create new card with data from Scryfall API
       card = new Card();
-      card.multiverseId = multiverseId;
+      card.scryfallId = scryfallId;
       card.name = cardData.name;
       card.manaCost = cardData.mana_cost || '';
       card.convertedManaCost = cardData.cmc || 0;
@@ -62,8 +62,8 @@ export class CardService {
       
       return this.cardRepository.save(card);
     } catch (error) {
-      console.log(`Card with multiverse ID ${multiverseId} could not be found or fetched from Scryfall API`);
-      throw new NotFoundException(`Card with multiverse ID ${multiverseId} could not be found or fetched from Scryfall API`);
+      console.log(`Card with scryfall ID ${scryfallId} could not be found or fetched from Scryfall API`);
+      throw new NotFoundException(`Card with scryfall ID ${scryfallId} could not be found or fetched from Scryfall API`);
     }
   }
 
