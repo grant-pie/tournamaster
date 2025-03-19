@@ -77,7 +77,7 @@ export class UserCardController {
     @Param('userId') userId: string,
     @Body() body: {scryfallId: string }
   ) {
-    console.log(`attempting to add card with scryfall id of ${body.scryfallId} to user with id of ${userId}`);
+    
     const userCard = await this.userCardService.addCardToUser(
       req.user,
       userId,

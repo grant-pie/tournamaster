@@ -31,36 +31,40 @@ let DeckController = class DeckController {
         this.userCardService = userCardService;
     }
     async addUserCardToDeck(req, deckId, userCardId) {
-        console.log('route called');
         const userCard = await this.userCardService.findById(userCardId);
         if (!userCard) {
-            console.log('user not found');
             throw new common_1.NotFoundException(`UserCard with id ${userCardId} not found`);
         }
         const deck = await this.deckService.addUserCardToDeck(req.user, deckId, userCardId);
         return { deck };
     }
     async addUserCardToDeckForUser(req, userId, deckId, body) {
-        console.log('route called');
+        console.log(`deck controller - attempting to add card with id: ${body.userCardId} to deck with id: ${deckId} for user with id: ${userId}`);
         if (req.user.role !== role_enum_1.Role.ADMIN) {
+            console.log('access denied');
             return { error: 'Access denied' };
         }
-        console.log('route called');
+        console.log('access granted');
         const user = await this.userService.findById(userId);
         if (!user) {
             console.log('user not found');
             throw new common_1.NotFoundException(`User with user id ${userId} not found`);
         }
+        console.log('user found granted');
         const userCard = await this.userCardService.findById(body.userCardId);
         if (!userCard) {
             console.log('card not found');
             throw new common_1.NotFoundException(`UserCard with id ${body.userCardId} not found`);
         }
+        console.log('card found');
         if (userCard.userId !== userId) {
             console.log('card does not belong to user');
             return { error: 'UserCard does not belong to this user' };
         }
+        console.log('card belongs to user');
         const deck = await this.deckService.addUserCardToDeck(user, deckId, body.userCardId);
+        console.log('card added to deck');
+        console.log(deck);
         return { deck };
     }
     async getUserDecks(req, userId) {
@@ -90,7 +94,6 @@ let DeckController = class DeckController {
             throw new common_1.NotFoundException(`User with user id ${userId} not found`);
         }
         const deck = await this.deckService.create(user, createDeckDto);
-        console.log({ deck });
         return { deck };
     }
     async updateDeck(req, id, updateDeckDto) {

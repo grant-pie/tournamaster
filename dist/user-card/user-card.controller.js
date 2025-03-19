@@ -67,7 +67,6 @@ let UserCardController = class UserCardController {
         return { cards };
     }
     async addCardToUser(req, userId, body) {
-        console.log(`attempting to add card with scryfall id of ${body.scryfallId} to user with id of ${userId}`);
         const userCard = await this.userCardService.addCardToUser(req.user, userId, body.scryfallId);
         return {
             userCard: {
