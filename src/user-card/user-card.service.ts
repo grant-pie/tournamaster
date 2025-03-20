@@ -7,6 +7,23 @@ import { User } from '../user/entities/user.entity';
 import { Role } from '../user/enums/role.enum';
 import { CardService } from '../card/card.service';
 
+// Add pagination interfaces
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
+}
+
 @Injectable()
 export class UserCardService {
   constructor(
@@ -15,12 +32,32 @@ export class UserCardService {
     private cardService: CardService,
   ) {}
 
-  async findAllByUserId(userId: string): Promise<UserCard[]> {
-    return this.userCardRepository.find({
+  async findAllByUserId(
+    userId: string, 
+    paginationParams?: PaginationParams
+  ): Promise<PaginatedResult<UserCard>> {
+    const page = paginationParams?.page || 1;
+    const limit = paginationParams?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [items, totalItems] = await this.userCardRepository.findAndCount({
       where: { userId },
       order: { createdAt: 'DESC' },
       relations: ['card'],
+      skip,
+      take: limit,
     });
+
+    return {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async findById(id: string): Promise<UserCard | null> {
@@ -32,7 +69,15 @@ export class UserCardService {
     return userCard;
   }
 
-  async searchUserCards(userId: string, query: any): Promise<UserCard[]> {
+  async searchUserCards(
+    userId: string, 
+    query: any, 
+    paginationParams?: PaginationParams
+  ): Promise<PaginatedResult<UserCard>> {
+    const page = paginationParams?.page || 1;
+    const limit = paginationParams?.limit || 10;
+    const skip = (page - 1) * limit;
+
     const queryBuilder = this.userCardRepository.createQueryBuilder('userCard')
       .leftJoinAndSelect('userCard.card', 'card')
       .where('userCard.userId = :userId', { userId });
@@ -125,7 +170,22 @@ export class UserCardService {
       queryBuilder.orderBy('userCard.createdAt', 'DESC');
     }
     
-    return queryBuilder.getMany();
+    // Apply pagination
+    queryBuilder.skip(skip).take(limit);
+    
+    // Get results and count
+    const [items, totalItems] = await queryBuilder.getManyAndCount();
+    
+    return {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async addCardToUser(currentUser: User, userId: string, scryfallId: string): Promise<UserCard> {

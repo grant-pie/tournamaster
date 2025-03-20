@@ -90,7 +90,6 @@ export class DeckService {
     
     // Check if user owns deck or is admin
     if (currentUser.role !== Role.ADMIN && currentUser.id !== deck.userId) {
-      console.log('You do not have permission to modify this deck');
       throw new ForbiddenException('You do not have permission to modify this deck');
     }
     
@@ -100,28 +99,27 @@ export class DeckService {
     });
     
     if (!userCard) {
-      console.log('usercard not found');
       throw new NotFoundException(`UserCard with ID ${userCardId} not found`);
     }
     
     // Check if the user card belongs to the current user
     if (userCard.userId !== currentUser.id && currentUser.role !== Role.ADMIN) {
-      console.log('card does not belong to current user');
+
       throw new ForbiddenException('You do not have permission to add this card');
     }
     
     // Check if the user card is already in the deck
     const isUserCardInDeck = deck.userCards.some(uc => uc.id === userCardId);
-    console.log(isUserCardInDeck);
+
     if (!isUserCardInDeck) {
       if (!deck.userCards) {
         deck.userCards = [];
       }
-      console.log('adding card to deck');
+
       deck.userCards.push(userCard);
       await this.deckRepository.save(deck);
     }
-    console.log(deck);
+  
     return deck;
   }
 

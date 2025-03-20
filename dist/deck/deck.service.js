@@ -74,31 +74,25 @@ let DeckService = class DeckService {
     async addUserCardToDeck(currentUser, deckId, userCardId) {
         const deck = await this.findOne(deckId);
         if (currentUser.role !== role_enum_1.Role.ADMIN && currentUser.id !== deck.userId) {
-            console.log('You do not have permission to modify this deck');
             throw new common_1.ForbiddenException('You do not have permission to modify this deck');
         }
         const userCard = await this.userCardRepository.findOne({
             where: { id: userCardId }
         });
         if (!userCard) {
-            console.log('usercard not found');
             throw new common_1.NotFoundException(`UserCard with ID ${userCardId} not found`);
         }
         if (userCard.userId !== currentUser.id && currentUser.role !== role_enum_1.Role.ADMIN) {
-            console.log('card does not belong to current user');
             throw new common_1.ForbiddenException('You do not have permission to add this card');
         }
         const isUserCardInDeck = deck.userCards.some(uc => uc.id === userCardId);
-        console.log(isUserCardInDeck);
         if (!isUserCardInDeck) {
             if (!deck.userCards) {
                 deck.userCards = [];
             }
-            console.log('adding card to deck');
             deck.userCards.push(userCard);
             await this.deckRepository.save(deck);
         }
-        console.log(deck);
         return deck;
     }
     async removeUserCardFromDeck(currentUser, deckId, userCardId) {

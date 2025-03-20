@@ -1,7 +1,7 @@
 // src/user-card/user-card.controller.ts
 import { Controller, Get, Post, Delete, Param, Body, UseGuards, Req, Query, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { UserCardService } from './user-card.service';
+import { UserCardService, PaginationParams } from './user-card.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../user/enums/role.enum';
@@ -15,7 +15,18 @@ export class UserCardController {
   ) {}
 
   @Get('username/:username')
-  async getCardsByUsername(@Param('username') username: string, @Query() query) {
+  async getCardsByUsername(
+    @Param('username') username: string, 
+    @Query() query
+  ) {
+    // Extract pagination parameters
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 10;
+    const paginationParams: PaginationParams = { page, limit };
+    
+    // Remove pagination params from query to use for filtering
+    const { page: _, limit: __, ...filterParams } = query;
+
     // Find the user by username
     const user = await this.userService.findByUsername(username);
     
@@ -23,50 +34,68 @@ export class UserCardController {
       throw new NotFoundException(`User with username ${username} not found`);
     }
     
-    // Get user's cards
-    let userCards;
-    if (Object.keys(query).length > 0) {
-      userCards = await this.userCardService.searchUserCards(user.id, query);
+    // Get user's cards with pagination
+    let response;
+    if (Object.keys(filterParams).length > 0) {
+      response = await this.userCardService.searchUserCards(user.id, filterParams, paginationParams);
     } else {
-      userCards = await this.userCardService.findAllByUserId(user.id);
+      response = await this.userCardService.findAllByUserId(user.id, paginationParams);
     }
     
     // Format the response to include card details
-    const cards = userCards.map(userCard => ({
+    const cards = response.items.map(userCard => ({
       id: userCard.id,
       userId: userCard.userId,
       cardDetails: userCard.card,
       createdAt: userCard.createdAt
     }));
     
-    return { cards };
+    return { 
+      cards,
+      pagination: response.meta
+    };
   }
 
   @Get(':userId')
   @UseGuards(AuthGuard('jwt'))
-  async getUserCards(@Req() req, @Param('userId') userId: string, @Query() query) {
+  async getUserCards(
+    @Req() req, 
+    @Param('userId') userId: string, 
+    @Query() query
+  ) {
     // If not admin and not requesting own cards, throw error
     if (req.user.role !== Role.ADMIN && req.user.id !== userId) {
       return { error: 'Access denied' };
     }
     
+    // Extract pagination parameters
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 10;
+    const paginationParams: PaginationParams = { page, limit };
+    
+    // Remove pagination params from query to use for filtering
+    const { page: _, limit: __, ...filterParams } = query;
+    
     // If there are search parameters, use search function
-    let userCards;
-    if (Object.keys(query).length > 0) {
-      userCards = await this.userCardService.searchUserCards(userId, query);
+    let response;
+    if (Object.keys(filterParams).length > 0) {
+      response = await this.userCardService.searchUserCards(userId, filterParams, paginationParams);
     } else {
-      userCards = await this.userCardService.findAllByUserId(userId);
+      response = await this.userCardService.findAllByUserId(userId, paginationParams);
     }
     
     // Format the response to include card details
-    const cards = userCards.map(userCard => ({
+    const cards = response.items.map(userCard => ({
       id: userCard.id,
       userId: userCard.userId,
       cardDetails: userCard.card,
       createdAt: userCard.createdAt
     }));
     
-    return { cards };
+    return { 
+      cards,
+      pagination: response.meta
+    };
   }
 
   @Post(':userId')

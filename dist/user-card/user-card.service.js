@@ -26,12 +26,27 @@ let UserCardService = class UserCardService {
         this.userCardRepository = userCardRepository;
         this.cardService = cardService;
     }
-    async findAllByUserId(userId) {
-        return this.userCardRepository.find({
+    async findAllByUserId(userId, paginationParams) {
+        const page = paginationParams?.page || 1;
+        const limit = paginationParams?.limit || 10;
+        const skip = (page - 1) * limit;
+        const [items, totalItems] = await this.userCardRepository.findAndCount({
             where: { userId },
             order: { createdAt: 'DESC' },
             relations: ['card'],
+            skip,
+            take: limit,
         });
+        return {
+            items,
+            meta: {
+                totalItems,
+                itemCount: items.length,
+                itemsPerPage: limit,
+                totalPages: Math.ceil(totalItems / limit),
+                currentPage: page,
+            },
+        };
     }
     async findById(id) {
         const userCard = await this.userCardRepository.findOne({
@@ -40,7 +55,10 @@ let UserCardService = class UserCardService {
         });
         return userCard;
     }
-    async searchUserCards(userId, query) {
+    async searchUserCards(userId, query, paginationParams) {
+        const page = paginationParams?.page || 1;
+        const limit = paginationParams?.limit || 10;
+        const skip = (page - 1) * limit;
         const queryBuilder = this.userCardRepository.createQueryBuilder('userCard')
             .leftJoinAndSelect('userCard.card', 'card')
             .where('userCard.userId = :userId', { userId });
@@ -106,7 +124,18 @@ let UserCardService = class UserCardService {
         else {
             queryBuilder.orderBy('userCard.createdAt', 'DESC');
         }
-        return queryBuilder.getMany();
+        queryBuilder.skip(skip).take(limit);
+        const [items, totalItems] = await queryBuilder.getManyAndCount();
+        return {
+            items,
+            meta: {
+                totalItems,
+                itemCount: items.length,
+                itemsPerPage: limit,
+                totalPages: Math.ceil(totalItems / limit),
+                currentPage: page,
+            },
+        };
     }
     async addCardToUser(currentUser, userId, scryfallId) {
         if (currentUser.role !== role_enum_1.Role.ADMIN && currentUser.id !== userId) {

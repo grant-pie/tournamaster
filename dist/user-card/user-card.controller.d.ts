@@ -6,12 +6,15 @@ export declare class UserCardController {
     constructor(userCardService: UserCardService, userService: UserService);
     getCardsByUsername(username: string, query: any): Promise<{
         cards: any;
+        pagination: any;
     }>;
     getUserCards(req: any, userId: string, query: any): Promise<{
         error: string;
         cards?: undefined;
+        pagination?: undefined;
     } | {
         cards: any;
+        pagination: any;
         error?: undefined;
     }>;
     addCardToUser(req: any, userId: string, body: {

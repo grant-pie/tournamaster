@@ -28,43 +28,57 @@ let UserCardController = class UserCardController {
         this.userService = userService;
     }
     async getCardsByUsername(username, query) {
+        const page = query.page ? parseInt(query.page, 10) : 1;
+        const limit = query.limit ? parseInt(query.limit, 10) : 10;
+        const paginationParams = { page, limit };
+        const { page: _, limit: __, ...filterParams } = query;
         const user = await this.userService.findByUsername(username);
         if (!user) {
             throw new common_1.NotFoundException(`User with username ${username} not found`);
         }
-        let userCards;
-        if (Object.keys(query).length > 0) {
-            userCards = await this.userCardService.searchUserCards(user.id, query);
+        let response;
+        if (Object.keys(filterParams).length > 0) {
+            response = await this.userCardService.searchUserCards(user.id, filterParams, paginationParams);
         }
         else {
-            userCards = await this.userCardService.findAllByUserId(user.id);
+            response = await this.userCardService.findAllByUserId(user.id, paginationParams);
         }
-        const cards = userCards.map(userCard => ({
+        const cards = response.items.map(userCard => ({
             id: userCard.id,
             userId: userCard.userId,
             cardDetails: userCard.card,
             createdAt: userCard.createdAt
         }));
-        return { cards };
+        return {
+            cards,
+            pagination: response.meta
+        };
     }
     async getUserCards(req, userId, query) {
         if (req.user.role !== role_enum_1.Role.ADMIN && req.user.id !== userId) {
             return { error: 'Access denied' };
         }
-        let userCards;
-        if (Object.keys(query).length > 0) {
-            userCards = await this.userCardService.searchUserCards(userId, query);
+        const page = query.page ? parseInt(query.page, 10) : 1;
+        const limit = query.limit ? parseInt(query.limit, 10) : 10;
+        const paginationParams = { page, limit };
+        const { page: _, limit: __, ...filterParams } = query;
+        let response;
+        if (Object.keys(filterParams).length > 0) {
+            response = await this.userCardService.searchUserCards(userId, filterParams, paginationParams);
         }
         else {
-            userCards = await this.userCardService.findAllByUserId(userId);
+            response = await this.userCardService.findAllByUserId(userId, paginationParams);
         }
-        const cards = userCards.map(userCard => ({
+        const cards = response.items.map(userCard => ({
             id: userCard.id,
             userId: userCard.userId,
             cardDetails: userCard.card,
             createdAt: userCard.createdAt
         }));
-        return { cards };
+        return {
+            cards,
+            pagination: response.meta
+        };
     }
     async addCardToUser(req, userId, body) {
         const userCard = await this.userCardService.addCardToUser(req.user, userId, body.scryfallId);
