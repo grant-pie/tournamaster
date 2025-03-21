@@ -49,39 +49,33 @@ export class DeckController {
     @Param('deckId') deckId: string,
     @Body() body: { userCardId: string }
   ) {
-    console.log(`deck controller - attempting to add card with id: ${body.userCardId} to deck with id: ${deckId} for user with id: ${userId}`);
     if (req.user.role !== Role.ADMIN) {
-      console.log('access denied');
       return { error: 'Access denied' };
     }
-    console.log('access granted');
     const user = await this.userService.findById(userId);
     
     if (!user) {
-      console.log('user not found');
       throw new NotFoundException(`User with user id ${userId} not found`);
     }
-    console.log('user found granted');
     const userCard = await this.userCardService.findById(body.userCardId);
     
     if (!userCard) {
-      console.log('card not found');
+    
       throw new NotFoundException(`UserCard with id ${body.userCardId} not found`);
     }
-    console.log('card found');
+   
     // Verify that the user card belongs to the user
     if (userCard.userId !== userId) {
-      console.log('card does not belong to user');
+
       return { error: 'UserCard does not belong to this user' };
     }
-    console.log('card belongs to user');
+
     const deck = await this.deckService.addUserCardToDeck(
       user, 
       deckId, 
       body.userCardId
     );
-    console.log('card added to deck');
-    console.log(deck);
+
     return { deck };
   }
 
